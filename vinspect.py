@@ -13,6 +13,24 @@ class AuthError(Exception):
     def __str__(self):
         return(repr(self.value))
 
+def _confLogger(level=logging.INFO):
+    # add the notice level
+    NOTICE_LEVEL_NUM = logging.INFO+1
+    logging.addLevelName(NOTICE_LEVEL_NUM, "NOTICE")
+    def notice(self, message, *args, **kws):
+        if self.isEnabledFor(NOTICE_LEVEL_NUM):
+            # Yes, logger takes its '*args' as 'args'.
+            self._log(NOTICE_LEVEL_NUM, message, args, **kws)
+    logging.Logger.notice = notice
+    # configure the streamhandler
+    logger = logging.getLogger()
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    # ::notice file={name},line={line},endLine={endLine},title={title}::{message}
+    # NOTE: no {endline} or {title} available by default
+    formatter = logging.Formatter('::%(levelname)s file=%(filename)s,line=%(lineno)d::%(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
 def _gemfile_from_gems(gems, project, platform):
     gemfile = ''
@@ -117,6 +135,8 @@ def run_snyk(path: str, project: str, platform: str, s_token: str, s_org: str, m
 # os.chdir('/Users/jeremy.mill/Documents/puppet-runtime')
 
 if __name__ == "__main__":
+    # configure the logger
+    _confLogger()
     # get variables from the env vars
     s_token = os.getenv("SNYK_TOKEN")
     if not s_token:
@@ -124,6 +144,7 @@ if __name__ == "__main__":
     s_org = os.getenv("SNYK_ORG")
     if not s_org:
         raise ValueError("no snyk org")
+    
 
     # build projects, targets, and output files
     gen_gemfiles = 'gen_gemfiles'
