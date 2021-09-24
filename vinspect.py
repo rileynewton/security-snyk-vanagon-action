@@ -230,25 +230,31 @@ def run_snyk(path: str, project: str, platform: str, s_org: str, min_sev:str ='m
     finally:
         os.chdir(cdir)
 
-# temp
-os.chdir('/Users/jeremy.mill/Documents/forks/puppet-runtime')
-os.environ["NO_MONITOR"] = "1"
 
 if __name__ == "__main__":
     # configure the logger
+    path = os.getenv("PATH")
+    print(f"===PATH===\b{path}")
+    ls = subprocess.check_output(['ls', '-la', '/usr/local/bin/']).decode('utf-8')
+    print(f'===ls===\n{ls}')
     _confLogger()
     # get variables from the env vars
-    s_token = os.getenv("SNYK_TOKEN")
+    s_token = os.getenv("INPUT_SNYKTOKEN")
     if not s_token:
         raise ValueError("no snyk token")
-    no_monitor = os.getenv('NO_MONITOR')
+    no_monitor = os.getenv('INPUT_NOMONITOR')
     if not no_monitor:
         no_monitor=False
     else:
         no_monitor=True
-    s_org = os.getenv("SNYK_ORG")
+    s_org = os.getenv("INPUT_SNYKORG")
     if not s_org and not no_monitor:
         raise ValueError("no snyk org")
+    workdir = os.getenv("GITHUB_WORKSPACE")
+    if not workdir:
+        raise ValueError("no github workspace!")
+    os.chdir(workdir)
+    #os.chdir('/Users/jeremy.mill/Documents/forks/puppet-runtime')
     # auth snyk
     try:
         auth_snyk(s_token)
@@ -321,6 +327,10 @@ if __name__ == "__main__":
     #print('components without URLs:\n', components_no_url)
     if warning_repos:
         _setOutput('warning_repos', ','.join(warning_repos))
+    else:
+        _setOutput('warning_repos', '')
     if vulns:
         _setOutput('vulns', vulns)
+    else:
+        _setOutput('vulns', '')
     logging.notice('finished run')

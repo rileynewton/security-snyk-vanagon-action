@@ -1,0 +1,17 @@
+name: vanagon check PRs
+ 
+on:
+ push:
+   branches:
+     master
+
+jobs:
+ build:
+   runs-on: ubuntu-latest
+   steps:
+    - uses: actions/checkout@v2
+    - name: Run this scanner
+      #TODO: update this
+      uses: deborah-digges/deploy-storybook-action@v13.0
+      with:
+        access-token: ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}
