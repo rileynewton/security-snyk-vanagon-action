@@ -1,10 +1,10 @@
 name: 'vanagon_snyk_scan_action'
 description: 'Scans vanagon builds for ruby dependencies and untrusted repos'
-inputs:
-  targets:  # id of input
-    description: 'comma separated list in the form <project>_<platform> that should be tested '
-    required: true
-    default: ''
+# inputs:
+#   targets:  # id of input
+#     description: 'comma separated list in the form <project>_<platform> that should be tested '
+#     required: true
+#     default: ''
 outputs:
   vulns: # id of output
     description: 'Array of vulnerable packages'

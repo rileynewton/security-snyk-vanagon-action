@@ -13,17 +13,106 @@ class AuthError(Exception):
     def __str__(self):
         return(repr(self.value))
 
-def _confLogger(level=logging.INFO):
-    # add the notice level
-    NOTICE_LEVEL_NUM = logging.INFO+1
-    logging.addLevelName(NOTICE_LEVEL_NUM, "NOTICE")
-    def notice(self, message, *args, **kws):
-        if self.isEnabledFor(NOTICE_LEVEL_NUM):
-            # Yes, logger takes its '*args' as 'args'.
-            self._log(NOTICE_LEVEL_NUM, message, args, **kws)
-    logging.Logger.notice = notice
-    # configure the streamhandler
+class VulnReport():
+    def _getVulnID(self, vuln)->str:
+        '''returns the CVE ids'''
+        try:
+            cveid = vuln['identifiers']['CVE']
+            cveid = ','.join(cveid)
+            return cveid
+        except KeyError:
+            try:
+                id = vuln['id']
+                return id
+            except KeyError:
+                return 'UNKNOWN'
+        
+    def __init__(self, vuln: dict):
+        self._vuln = vuln
+        # name
+        try:
+            self.package_name = vuln['packageName']
+        except KeyError:
+            try:
+                self.package_name = vuln['moduleName']
+            except KeyError:
+                self.package_name = 'UKNOWN'
+        # version
+        try:
+            self.version = vuln['version']
+        except KeyError:
+            self.version = 'UNKNOWN'
+        # vuln id
+        self.vuln_string = self._getVulnID(vuln)
+    
+    def __eq__(self, other):
+        if isinstance(other, VulnReport):
+            return self.__key() == other.__key()
+        return NotImplemented
+
+    def __key(self):
+        s_ids = self.vuln_string.split(',')
+        s_ids.sort()
+        v_sorted = ','.join(s_ids)
+        return (self.package_name, self.version, v_sorted)
+    
+    def __hash__(self) -> int:
+        return hash(self.__key())
+
+    def __str__(self):
+        return f'{self.package_name}-{self.version}: {self.vuln_string}'
+    def __repr__(self) -> str:
+        return self.__str__()
+
+def addLoggingLevel(levelName, levelNum, methodName=None):
+    """
+    Comprehensively adds a new logging level to the `logging` module and the
+    currently configured logging class.
+
+    `levelName` becomes an attribute of the `logging` module with the value
+    `levelNum`. `methodName` becomes a convenience method for both `logging`
+    itself and the class returned by `logging.getLoggerClass()` (usually just
+    `logging.Logger`). If `methodName` is not specified, `levelName.lower()` is
+    used.
+
+    To avoid accidental clobberings of existing attributes, this method will
+    raise an `AttributeError` if the level name is already an attribute of the
+    `logging` module or if the method name is already present 
+
+    Example
+    -------
+    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
+    >>> logging.getLogger(__name__).setLevel("TRACE")
+    >>> logging.getLogger(__name__).trace('that worked')
+    >>> logging.trace('so did this')
+    >>> logging.TRACE
+    5
+
+    """
+    if not methodName:
+        methodName = levelName.lower()
+
+    if hasattr(logging, levelName):
+       raise AttributeError('{} already defined in logging module'.format(levelName))
+    if hasattr(logging, methodName):
+       raise AttributeError('{} already defined in logging module'.format(methodName))
+    if hasattr(logging.getLoggerClass(), methodName):
+       raise AttributeError('{} already defined in logger class'.format(methodName))
+    
+    def logForLevel(self, message, *args, **kwargs):
+        if self.isEnabledFor(levelNum):
+            self._log(levelNum, message, args, **kwargs)
+    def logToRoot(message, *args, **kwargs):
+        logging.log(levelNum, message, *args, **kwargs)
+
+    logging.addLevelName(levelNum, levelName)
+    setattr(logging, levelName, levelNum)
+    setattr(logging.getLoggerClass(), methodName, logForLevel)
+    setattr(logging, methodName, logToRoot)
+
+def _confLogger(level=logging.INFO-1):
     logger = logging.getLogger()
+    logger.setLevel(level)
     ch = logging.StreamHandler()
     ch.setLevel(level)
     # ::notice file={name},line={line},endLine={endLine},title={title}::{message}
@@ -31,6 +120,12 @@ def _confLogger(level=logging.INFO):
     formatter = logging.Formatter('::%(levelname)s file=%(filename)s,line=%(lineno)d::%(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+    # add notice handler
+    addLoggingLevel('notice', logging.INFO+1)
+
+def _setOutput(name:str, value:str):
+    #echo "::set-output name=action_fruit::strawberry"
+    print(f'::set-output name={name}::{value}')
 
 def _gemfile_from_gems(gems, project, platform):
     gemfile = ''
@@ -103,36 +198,41 @@ def build_lockfile(gemfile_path, proj, plat):
             logging.error(f'Error calling gemfile lock on {proj} {plat}')
     os.chdir(cdir)
 
-def run_snyk(path: str, project: str, platform: str, s_token: str, s_org: str, min_sev:str ='medium'):
+def auth_snyk(s_token: str):
+    # auth snyk
+    auth_result = subprocess.call(['snyk', 'auth', s_token])
+    if auth_result != 0:
+        logging.error(f"Error authenticating to snyk. Return code: {auth_result}")
+        raise AuthError("error authenticating")
+
+def run_snyk(path: str, project: str, platform: str, s_org: str, min_sev:str ='medium', no_monitor=False):
     cdir = os.getcwd()
     if os.path.isfile(path):
         os.chdir(os.path.dirname(path))
     else:
         os.chdir(path)
     try:
-        # auth snyk
-        auth_result = subprocess.call(['snyk', 'auth', s_token])
-        if auth_result != 0:
-            logging.error(f"Error authenticating to snyk. Return code: {auth_result}")
-            raise AuthError("error authenticating")
         # run snyk test
         if min_sev not in ['low','medium','high','critical']:
             raise ValueError("invalid severity level")
         sevstring = f'--severity-threshold={min_sev}'
-        test_res = subprocess.check_output(['snyk', 'test', sevstring, '--json']).decode('utf-8')
+        test_res = subprocess.run(['snyk', 'test', sevstring, '--json'], stdout=subprocess.PIPE, check=False).stdout
+        test_res = test_res.decode('utf-8')
         test_res = json.loads(test_res)
         # run snyk monitor
-        snyk_org = f'--org={s_org}'
-        snyk_proj = f'--project-name={project}_{platform}'
-        monitor_res = subprocess.call(['snyk', 'monitor', snyk_org, snyk_proj])
-        if monitor_res != 0:
-            logging.error(f'Error running snyk monitor for {project} {platform}')
+        if not no_monitor:
+            snyk_org = f'--org={s_org}'
+            snyk_proj = f'--project-name={project}_{platform}'
+            monitor_res = subprocess.call(['snyk', 'monitor', snyk_org, snyk_proj])
+            if monitor_res != 0:
+                logging.error(f'Error running snyk monitor for {project} {platform}')
         return test_res
     finally:
         os.chdir(cdir)
 
-# # temp
-# os.chdir('/Users/jeremy.mill/Documents/puppet-runtime')
+# temp
+os.chdir('/Users/jeremy.mill/Documents/forks/puppet-runtime')
+os.environ["NO_MONITOR"] = "1"
 
 if __name__ == "__main__":
     # configure the logger
@@ -141,9 +241,20 @@ if __name__ == "__main__":
     s_token = os.getenv("SNYK_TOKEN")
     if not s_token:
         raise ValueError("no snyk token")
+    no_monitor = os.getenv('NO_MONITOR')
+    if not no_monitor:
+        no_monitor=False
+    else:
+        no_monitor=True
     s_org = os.getenv("SNYK_ORG")
-    if not s_org:
+    if not s_org and not no_monitor:
         raise ValueError("no snyk org")
+    # auth snyk
+    try:
+        auth_snyk(s_token)
+    except AuthError as e:
+        logging.error("Couldn't authenticate snyk")
+        raise e
     
 
     # build projects, targets, and output files
@@ -160,12 +271,14 @@ if __name__ == "__main__":
     # run process
     components_no_url = set()
     warning_repos = set()
+    licenses_errors = set()
+    vulns = set()
     for project in projects:
         for platform in platforms:
             try:
                 sout = subprocess.check_output(['vanagon', 'inspect', project, platform], stderr=subprocess.DEVNULL).decode('utf-8')
                 #print(sout)
-                print(f'{project} {platform}')
+                logging.debug(f'{project} {platform}')
                 sout = json.loads(sout)
                 gemfile, i_no_url = build_gemfile(sout, project, platform)
                 components_no_url = set.union(components_no_url, i_no_url)
@@ -182,19 +295,32 @@ if __name__ == "__main__":
                     build_lockfile(foldername, project, platform)
                     # run snyk on it
                     try:
-                        test_results = run_snyk(foldername, project, platform, s_token, s_org)
+                        test_results = run_snyk(foldername, project, platform, s_org, no_monitor=no_monitor)
                     except AuthError:
                         continue
                     except ValueError:
                         logging.error(f"invalid snyk severity on {project} {platform}")
                         continue
+                    try:
+                        for lic, _v in test_results['licensesPolicy']['orgLicenseRules'].items():
+                            licenses_errors.add(lic)
+                    except KeyError:
+                        logging.error(f"Error parsing licenses for {project} {platform}")
+                        continue
+                    try:
+                        for vuln in test_results['vulnerabilities']:
+                            vulns.add(VulnReport(vuln))
+                    except KeyError:
+                        logging.error(f"Error parsing vulns for {project} {platform}")
+                        continue
             except subprocess.CalledProcessError:
                 continue
             except Exception as e:
-                print(f'error on {project}_{platform}')
-                print(e)
+                logging.error(f'error on {project}_{platform}. Error: {e}')
                 raise e
-    print('components without URLs:\n', components_no_url)
+    #print('components without URLs:\n', components_no_url)
     if warning_repos:
-        print('Warning Repos: ', warning_repos)
-    print('done')
+        _setOutput('warning_repos', ','.join(warning_repos))
+    if vulns:
+        _setOutput('vulns', vulns)
+    logging.notice('finished run')
