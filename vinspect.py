@@ -200,7 +200,7 @@ def build_lockfile(gemfile_path, proj, plat):
 
 def auth_snyk(s_token: str):
     # auth snyk
-    auth_result = subprocess.call(['snyk', 'auth', s_token])
+    auth_result = subprocess.call(['/usr/local/bin/snyk', 'auth', s_token])
     if auth_result != 0:
         logging.error(f"Error authenticating to snyk. Return code: {auth_result}")
         raise AuthError("error authenticating")
@@ -216,14 +216,14 @@ def run_snyk(path: str, project: str, platform: str, s_org: str, min_sev:str ='m
         if min_sev not in ['low','medium','high','critical']:
             raise ValueError("invalid severity level")
         sevstring = f'--severity-threshold={min_sev}'
-        test_res = subprocess.run(['snyk', 'test', sevstring, '--json'], stdout=subprocess.PIPE, check=False).stdout
+        test_res = subprocess.run(['/usr/local/bin/snyk', 'test', sevstring, '--json'], stdout=subprocess.PIPE, check=False).stdout
         test_res = test_res.decode('utf-8')
         test_res = json.loads(test_res)
         # run snyk monitor
         if not no_monitor:
             snyk_org = f'--org={s_org}'
             snyk_proj = f'--project-name={project}_{platform}'
-            monitor_res = subprocess.call(['snyk', 'monitor', snyk_org, snyk_proj])
+            monitor_res = subprocess.call(['/usr/local/bin/snyk', 'monitor', snyk_org, snyk_proj])
             if monitor_res != 0:
                 logging.error(f'Error running snyk monitor for {project} {platform}')
         return test_res
@@ -233,13 +233,10 @@ def run_snyk(path: str, project: str, platform: str, s_org: str, min_sev:str ='m
 
 if __name__ == "__main__":
     # configure the logger
-    path = os.getenv("PATH")
-    print(f"===PATH===\b{path}")
-    ls = subprocess.check_output(['ls', '-la', '/usr/local/bin/']).decode('utf-8')
-    print(f'===ls===\n{ls}')
     _confLogger()
     # get variables from the env vars
     s_token = os.getenv("INPUT_SNYKTOKEN")
+    print(s_token)
     if not s_token:
         raise ValueError("no snyk token")
     no_monitor = os.getenv('INPUT_NOMONITOR')
