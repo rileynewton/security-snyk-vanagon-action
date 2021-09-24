@@ -1,4 +1,4 @@
-FROM python:latest
+FROM python:alpine
 ADD vinspect.py /
 # add snyk
 RUN apk update
