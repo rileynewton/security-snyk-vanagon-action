@@ -1,12 +1,21 @@
 name: 'vanagon_snyk_scan_action'
 description: 'Scans vanagon builds for ruby dependencies and untrusted repos'
 inputs:
-  snyk_token:
+  snykToken:
     description: 'snyk access token'
     required: true
-  snyk_org:
+  snykOrg:
     description: 'snyk org to write results to'
     required: true
+  noMonitor:
+    description: 'allows skipping the snyk monitor step'
+    required: false
+  skipProjects:
+    description: 'A comma separated list of projects to skip'
+    required: false
+  skipPlatforms:
+    description: 'A comma separated list of platforms to skip'
+    required: false
 outputs:
   vulns: # id of output
     description: 'Array of vulnerable packages'

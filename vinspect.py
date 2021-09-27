@@ -249,6 +249,9 @@ if __name__ == "__main__":
     skip_projects = os.getenv("INPUT_SKIPPROJECTS")
     if skip_projects:
         skip_projects = [p.strip() for p in skip_projects.split(',')]
+    skip_platforms = os.getenv("INPUT_SKIPPLATFORMS")
+    if skip_platforms:
+        skip_platforms = [p.strip() for p in skip_platforms.split(',')]
     workdir = os.getenv("GITHUB_WORKSPACE")
     if not workdir:
         raise ValueError("no github workspace!")
@@ -274,6 +277,10 @@ if __name__ == "__main__":
                 projects.remove(p)
     platforms = [y for x in os.walk('./configs/platforms') for y in glob(os.path.join(x[0], '[a-zA-Z]*.rb'))]
     platforms = [os.path.basename(p).replace('.rb','' ) for p in platforms]
+    if skip_platforms:
+        for p in skip_platforms:
+            if p in platforms:
+                platforms.remove(p)
 
     # configure bundler
     subprocess.call(['bundle', 'config', 'specific_platform', 'true'])
