@@ -27,4 +27,4 @@ An array of vulnerable packages
 Array of non-puppet non-trusted (non-puppet) repos in use
 
 ## Example usage
-plasee see `action.yml` for a sample
+plasee see `sample_workflow.yaml` for a sample
