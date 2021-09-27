@@ -16,4 +16,4 @@ RUN gem install vanagon
 #RUN mkdir -p /home/runner/work/foo/bar
 #ADD ./testfiles/test_runtime /home/runner/work/foo/bar
 # RUN the script
-CMD [ "python", "./vinspect.py" ]
+CMD [ "vinspect.py" ]
