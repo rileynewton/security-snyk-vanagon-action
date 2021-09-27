@@ -19,8 +19,8 @@ inputs:
 outputs:
   vulns: # id of output
     description: 'Array of vulnerable packages'
-  licenses: # id of output
-    description: 'Array of license issues'
+  # licenses: # id of output
+  #   description: 'Array of license issues'
   warning_repos:
     description: 'Array of non-puppet non-trusted repos in use'
 runs:
