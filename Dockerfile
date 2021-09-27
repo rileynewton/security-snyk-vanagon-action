@@ -14,6 +14,6 @@ RUN gem install docopt
 RUN gem install vanagon
 # TEMP
 RUN mkdir -p /home/runner/work/foo/bar
-ADD test_runtime /home/runner/work/foo/bar
+ADD ./testfiles/test_runtime /home/runner/work/foo/bar
 # RUN the script
 CMD [ "python", "./vinspect.py" ]
