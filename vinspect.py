@@ -236,7 +236,6 @@ if __name__ == "__main__":
     _confLogger()
     # get variables from the env vars
     s_token = os.getenv("INPUT_SNYKTOKEN")
-    print(s_token)
     if not s_token:
         raise ValueError("no snyk token")
     no_monitor = os.getenv('INPUT_NOMONITOR')
@@ -247,6 +246,9 @@ if __name__ == "__main__":
     s_org = os.getenv("INPUT_SNYKORG")
     if not s_org and not no_monitor:
         raise ValueError("no snyk org")
+    skip_projects = os.getenv("INPUT_SKIPPROJECTS")
+    if skip_projects:
+        skip_projects = [p.strip() for p in skip_projects.split(',')]
     workdir = os.getenv("GITHUB_WORKSPACE")
     if not workdir:
         raise ValueError("no github workspace!")
@@ -266,6 +268,10 @@ if __name__ == "__main__":
         os.makedirs(gen_gemfiles)
     projects = [y for x in os.walk('./configs/projects') for y in glob(os.path.join(x[0], '[a-zA-Z]*.rb'))]
     projects = [os.path.basename(p).replace('.rb','' ) for p in projects]
+    if skip_projects:
+        for p in skip_projects:
+            if p in projects:
+                projects.remove(p)
     platforms = [y for x in os.walk('./configs/platforms') for y in glob(os.path.join(x[0], '[a-zA-Z]*.rb'))]
     platforms = [os.path.basename(p).replace('.rb','' ) for p in platforms]
 
