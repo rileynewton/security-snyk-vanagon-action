@@ -3,6 +3,7 @@ import os
 from glob import glob
 import subprocess
 import logging
+import asyncio
 
 ALLOWLIST_REPOS = []
 
@@ -230,8 +231,52 @@ def run_snyk(path: str, project: str, platform: str, s_org: str, min_sev:str ='m
     finally:
         os.chdir(cdir)
 
+async def handle_proj_platform(project, platform):
+    try:    
+        sout = subprocess.check_output(['vanagon', 'inspect', project, platform], stderr=subprocess.DEVNULL).decode('utf-8')
+        #print(sout)
+        logging.debug(f'{project} {platform}')
+        sout = json.loads(sout)
+        gemfile, i_no_url = build_gemfile(sout, project, platform)
+        components_no_url = set.union(components_no_url, i_no_url)
+        i_warning_repos, i_no_url = check_non_pl_repos(sout)
+        components_no_url = set.union(components_no_url, i_no_url)
+        warning_repos = set.union(warning_repos, i_warning_repos)
+        if gemfile:
+            # build the gemfile and gemfile.lock
+            foldername = os.path.join(gen_gemfiles, f'{project}_{platform}')
+            if not os.path.exists(foldername):
+                os.makedirs(foldername)
+            with open(os.path.join(foldername, 'Gemfile'), 'w') as f:
+                f.write(gemfile)
+            build_lockfile(foldername, project, platform)
+            # run snyk on it
+            try:
+                test_results = run_snyk(foldername, project, platform, s_org, no_monitor=no_monitor)
+            except AuthError:
+                return
+            except ValueError:
+                logging.error(f"invalid snyk severity on {project} {platform}")
+                return
+            try:
+                for lic, _v in test_results['licensesPolicy']['orgLicenseRules'].items():
+                    licenses_errors.add(lic)
+            except KeyError:
+                logging.error(f"Error parsing licenses for {project} {platform}")
+                return
+            try:
+                for vuln in test_results['vulnerabilities']:
+                    vulns.add(VulnReport(vuln))
+            except KeyError:
+                logging.error(f"Error parsing vulns for {project} {platform}")
+                return
+    except subprocess.CalledProcessError:
+        return
+    except Exception as e:
+        logging.error(f'error on {project}_{platform}. Error: {e}')
 
-if __name__ == "__main__":
+
+async def main():
     # configure the logger
     _confLogger()
     # get variables from the env vars
@@ -282,51 +327,16 @@ if __name__ == "__main__":
     warning_repos = set()
     licenses_errors = set()
     vulns = set()
+    # tasks = [
+    #     asyncio.ensure_future(safe_download(i))  # creating task starts coroutine
+    #     for i
+    #     in range(9)
+    # ]
+    tasks = []
+    await asyncio.gather(*tasks)
     for project in projects:
         for platform in platforms:
-            try:
-                sout = subprocess.check_output(['vanagon', 'inspect', project, platform], stderr=subprocess.DEVNULL).decode('utf-8')
-                #print(sout)
-                logging.debug(f'{project} {platform}')
-                sout = json.loads(sout)
-                gemfile, i_no_url = build_gemfile(sout, project, platform)
-                components_no_url = set.union(components_no_url, i_no_url)
-                i_warning_repos, i_no_url = check_non_pl_repos(sout)
-                components_no_url = set.union(components_no_url, i_no_url)
-                warning_repos = set.union(warning_repos, i_warning_repos)
-                if gemfile:
-                    # build the gemfile and gemfile.lock
-                    foldername = os.path.join(gen_gemfiles, f'{project}_{platform}')
-                    if not os.path.exists(foldername):
-                        os.makedirs(foldername)
-                    with open(os.path.join(foldername, 'Gemfile'), 'w') as f:
-                        f.write(gemfile)
-                    build_lockfile(foldername, project, platform)
-                    # run snyk on it
-                    try:
-                        test_results = run_snyk(foldername, project, platform, s_org, no_monitor=no_monitor)
-                    except AuthError:
-                        continue
-                    except ValueError:
-                        logging.error(f"invalid snyk severity on {project} {platform}")
-                        continue
-                    try:
-                        for lic, _v in test_results['licensesPolicy']['orgLicenseRules'].items():
-                            licenses_errors.add(lic)
-                    except KeyError:
-                        logging.error(f"Error parsing licenses for {project} {platform}")
-                        continue
-                    try:
-                        for vuln in test_results['vulnerabilities']:
-                            vulns.add(VulnReport(vuln))
-                    except KeyError:
-                        logging.error(f"Error parsing vulns for {project} {platform}")
-                        continue
-            except subprocess.CalledProcessError:
-                continue
-            except Exception as e:
-                logging.error(f'error on {project}_{platform}. Error: {e}')
-                raise e
+            asyncio.ensure_future(handle_proj_platform(project, platform))
     #print('components without URLs:\n', components_no_url)
     if warning_repos:
         _setOutput('warning_repos', ','.join(warning_repos))
@@ -337,3 +347,11 @@ if __name__ == "__main__":
     else:
         _setOutput('vulns', '')
     logging.notice('finished run')
+
+if __name__ ==  '__main__':
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main())
+    finally:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
