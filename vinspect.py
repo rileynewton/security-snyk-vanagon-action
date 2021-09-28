@@ -295,6 +295,9 @@ if __name__ == "__main__":
         for platform in platforms:
             try:
                 souts = subprocess.check_output(['vanagon', 'inspect', project, platform], stderr=subprocess.DEVNULL).decode('utf-8')
+                # check if the first line is a log and if it is, remove it
+                if not souts.startswith('['):
+                    souts = '\n'.join(souts.split('\n')[1:])
                 #print(sout)
                 logging.debug(f'{project} {platform}')
                 try:
