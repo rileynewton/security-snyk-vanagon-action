@@ -21,3 +21,6 @@ jobs:
         snykOrg: 'sectest'
         skipProjects: 'agent-runtime-5.5.x,agent-runtime-1.10.x,client-tools-runtime-irving,pdk-runtime'
         skipPlatforms: 'cisco-wrlinux-5-x86_64,cisco-wrlinux-7-x86_64,debian-10-armhf,eos-4-i386,fedora-30-x86_64,fedora-31-x86_64,osx-10.14-x86_64'
+    - name: Check output
+      if: steps.scan.outputs.vulns != ''
+      run: echo "Vulnerabilities detected; ${{ steps.scan.outputs.vulns }}" && exit 1
