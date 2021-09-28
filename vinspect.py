@@ -294,13 +294,17 @@ if __name__ == "__main__":
     for project in projects:
         for platform in platforms:
             try:
-                sout = subprocess.check_output(['vanagon', 'inspect', project, platform], stderr=subprocess.DEVNULL).decode('utf-8')
+                souts = subprocess.check_output(['vanagon', 'inspect', project, platform], stderr=subprocess.DEVNULL).decode('utf-8')
                 #print(sout)
                 logging.debug(f'{project} {platform}')
-                sout = json.loads(sout)
-                gemfile, i_no_url = build_gemfile(sout, project, platform)
+                try:
+                    sout_j = json.loads(souts)
+                except json.JSONDecodeError as e:
+                    logging.error(f'Error decoding vanagon inspect. Error: {e}\n\nOutput: {souts}')
+                    raise e
+                gemfile, i_no_url = build_gemfile(sout_j, project, platform)
                 components_no_url = set.union(components_no_url, i_no_url)
-                i_warning_repos, i_no_url = check_non_pl_repos(sout)
+                i_warning_repos, i_no_url = check_non_pl_repos(sout_j)
                 components_no_url = set.union(components_no_url, i_no_url)
                 warning_repos = set.union(warning_repos, i_warning_repos)
                 if gemfile:
