@@ -1,5 +1,6 @@
 FROM python:latest
-ADD vinspect.py /usr/local/bin/
+ADD vinspect.py /usr/local/bin/vinspect
+RUN chmod 751 /usr/local/bin/vinspect
 # add snyk
 RUN apt update
 #RUN apk add libstdc++
@@ -16,4 +17,4 @@ RUN gem install vanagon
 #RUN mkdir -p /home/runner/work/foo/bar
 #ADD ./testfiles/test_runtime /home/runner/work/foo/bar
 # RUN the script
-CMD [ "vinspect.py" ]
+CMD [ "vinspect" ]
