@@ -1,5 +1,5 @@
 FROM python:latest
-ADD vinspect.py /
+ADD vinspect.py /usr/local/bin/
 # add snyk
 RUN apt update
 #RUN apk add libstdc++
