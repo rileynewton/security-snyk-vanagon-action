@@ -2,8 +2,9 @@
 name: vanagon check PRs
 
 on:
-  pull_request_target:
-    types: ['opened','edited','reopened','synchronize']
+  push:
+    branches:
+      - main
 
 jobs:
  snyk_vanagon:
