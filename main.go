@@ -108,10 +108,6 @@ func buildGemFile(project, platform string, gems *[]gem) (string, error) {
 	// build the gemfile
 	gemfile := "source ENV['GEM_SOURCE'] || \"https://rubygems.org\"\n"
 	for _, gem := range *gems {
-		// TODO: delete me
-		if gem.Name == "ffi" {
-			gem.Version = "1.9.23"
-		}
 		gemfile += fmt.Sprintf("gem \"%s\", \"%s\"\n", gem.Name, gem.Version)
 	}
 	// make sure the output dir exists (creating if it doesn't) then write to a lockfile
