@@ -1,0 +1,132 @@
+some sample log comment
+{
+	"packaging_type": {
+	  "vanagon": "0.23.0.3.gf1cddf5"
+	},
+	"version": "snyk",
+	"components": {
+	  "runtime-agent": {
+	  },
+	  "openssl-1.1.1": {
+		"version": "1.1.1l",
+		"url": "https://openssl.org/source/openssl-1.1.1l.tar.gz"
+	  },
+	  "curl": {
+		"version": "7.77.0",
+		"url": "https://curl.se/download/curl-7.77.0.tar.gz"
+	  },
+	  "puppet-ca-bundle": {
+		"version": "1.0.9",
+		"url": "git://github.com/puppetlabs/puppet-ca-bundle.git",
+		"ref": "refs/tags/1.0.9"
+	  },
+	  "ruby-2.7.3": {
+		"version": "2.7.3",
+		"url": "https://cache.ruby-lang.org/pub/ruby/2.7/ruby-2.7.3.tar.gz"
+	  },
+	  "augeas": {
+		"version": "1.12.0",
+		"url": "http://download.augeas.net/augeas-1.12.0.tar.gz"
+	  },
+	  "libxml2": {
+		"version": "2.9.8",
+		"url": "http://xmlsoft.org/sources/libxml2-2.9.8.tar.gz"
+	  },
+	  "libxslt": {
+		"version": "1.1.33",
+		"url": "http://xmlsoft.org/sources/libxslt-1.1.33.tar.gz"
+	  },
+	  "ruby-augeas": {
+		"version": "0.5.0",
+		"url": "http://download.augeas.net/ruby/ruby-augeas-0.5.0.tgz"
+	  },
+	  "ruby-shadow": {
+		"version": "2.5.0",
+		"url": "git://github.com/apalmblad/ruby-shadow",
+		"ref": "refs/tags/2.5.0"
+	  },
+	  "ruby-selinux": {
+		"version": "2.9",
+		"url": "https://github.com/SELinuxProject/selinux/releases/download/20190315/libselinux-2.9.tar.gz"
+	  },
+	  "rubygem-hocon": {
+		"version": "1.3.1",
+		"url": "https://rubygems.org/downloads/hocon-1.3.1.gem"
+	  },
+	  "rubygem-deep_merge": {
+		"version": "1.2.1",
+		"url": "https://rubygems.org/downloads/deep_merge-1.2.1.gem"
+	  },
+	  "rubygem-net-ssh": {
+		"version": "4.2.0",
+		"url": "https://rubygems.org/downloads/net-ssh-4.2.0.gem"
+	  },
+	  "rubygem-semantic_puppet": {
+		"version": "1.0.4",
+		"url": "https://rubygems.org/downloads/semantic_puppet-1.0.4.gem"
+	  },
+	  "rubygem-text": {
+		"version": "1.3.1",
+		"url": "https://rubygems.org/downloads/text-1.3.1.gem"
+	  },
+	  "rubygem-locale": {
+		"version": "2.1.3",
+		"url": "https://rubygems.org/downloads/locale-2.1.3.gem"
+	  },
+	  "rubygem-gettext": {
+		"version": "3.2.2",
+		"url": "https://rubygems.org/downloads/gettext-3.2.2.gem"
+	  },
+	  "rubygem-fast_gettext": {
+		"version": "1.1.2",
+		"url": "https://rubygems.org/downloads/fast_gettext-1.1.2.gem"
+	  },
+	  "rubygem-concurrent-ruby": {
+		"version": "1.1.9",
+		"url": "https://rubygems.org/downloads/concurrent-ruby-1.1.9.gem"
+	  },
+	  "rubygem-ffi": {
+		"version": "1.9.3",
+		"url": "https://rubygems.org/downloads/ffi-1.9.3.gem"
+	  },
+	  "rubygem-multi_json": {
+		"version": "1.15.0",
+		"url": "https://rubygems.org/downloads/multi_json-1.15.0.gem"
+	  },
+	  "rubygem-optimist": {
+		"version": "3.0.1",
+		"url": "https://rubygems.org/downloads/optimist-3.0.1.gem"
+	  },
+	  "rubygem-highline": {
+		"version": "2.0.3",
+		"url": "https://rubygems.org/downloads/highline-2.0.3.gem"
+	  },
+	  "rubygem-hiera-eyaml": {
+		"version": "3.2.2",
+		"url": "https://rubygems.org/downloads/hiera-eyaml-3.2.2.gem"
+	  },
+	  "rubygem-thor": {
+		"version": "1.1.0",
+		"url": "https://rubygems.org/downloads/thor-1.1.0.gem"
+	  },
+	  "rubygem-scanf": {
+		"version": "1.0.0",
+		"url": "https://rubygems.org/downloads/scanf-1.0.0.gem"
+	  },
+	  "rubygem-sys-filesystem": {
+		"version": "1.4.1",
+		"url": "https://rubygems.org/downloads/sys-filesystem-1.4.1.gem"
+	  },
+	  "boost": {
+		"version": "1.73.0",
+		"url": "http://downloads.sourceforge.net/project/boost/boost/1.73.0/boost_1_73_0.tar.gz"
+	  },
+	  "yaml-cpp": {
+		"version": "yaml-cpp-0.6.2",
+		"url": "git://github.com/jbeder/yaml-cpp.git",
+		"ref": "refs/tags/yaml-cpp-0.6.2"
+	  }
+	},
+	"build_time": "2021-10-10T20:00:42-04:00"
+  }
+  Finished generating dependencies

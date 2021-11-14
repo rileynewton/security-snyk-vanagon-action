@@ -22,12 +22,34 @@ A comma separated list of projects to skip
 ### skipPlatforms
 A comma separated list of platforms to skip
 
+### urlsToReplace
+This is a comma separated list of URLs to replace with the value of `newHost`. This is in the format `<domain>,<format>`. Domains will *always* be replaced with `https://`
+
+For example if `newHost` is `a.baz.com` and `urlsToReplace` is:
+
+```
+foo.example.com,%s/foo,bar.another.net,%s/
+```
+
+Then the output would be:
+
+```
+foo.example.com -> a.baz.com/foo
+bar.another.net -> a.baz.com/
+```
+
+### newHost
+This is the new host to use to replace URLs from `urlsToReplace` with
+
+### rproxyKey
+If `newHost` is `localhost` then this key will be added as a basic authentication header via nginx rewrite
+
+### rproxyUser
+If `newHost` is `localhost` then this user will be added as a basic authentication header via nginx rewrite
+
 ## Outputs
 ### vulns
 An array of vulnerable packages
 
-### warning_repos
-Array of non-puppet non-trusted (non-puppet) repos in use
-
 ## Example usage
-plasee see `sample_workflow.yaml` for a sample
+please see `sample_workflow.yaml` for a sample
