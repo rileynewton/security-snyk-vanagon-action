@@ -47,6 +47,12 @@ If `newHost` is `localhost` then this key will be added as a basic authenticatio
 ### rproxyUser
 If `newHost` is `localhost` then this user will be added as a basic authentication header via nginx rewrite
 
+### sshKey
+A SSH key to install on the docker container in `/root/.ssh/<sshKeyName>`. It **must** be base64 encoded
+
+### sshKeyName
+The name of the SSH key
+
 ## Outputs
 ### vulns
 An array of vulnerable packages

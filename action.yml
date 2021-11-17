@@ -28,6 +28,12 @@ inputs:
   rproxyUser:
     description: 'a basic auth username to use for a reverse proxy'
     required: false
+  sshKey:
+    description: 'a base64 encoded SSH key to install on the container'
+    required: false
+  sshKeyName:
+    description: 'Name of the SSH key. Written to /root/.ssh/<sshKeyName>'
+    required: false
 outputs:
   vulns: # id of output
     description: 'Array of vulnerable packages'

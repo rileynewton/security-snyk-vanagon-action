@@ -26,6 +26,8 @@ jobs:
         newHost: 'localhost'
         rproxyUser: '${{ secrets.RPROXY_USER }}'
         rproxyKey: '${{ secrets.RPROXY_KEY }}'
+        sshKey: '${{ secrets.SSH_KEY }}'
+        sshKeyName: 'id_ed25519'
     - name: Check output
       if: steps.scan.outputs.vulns != ''
       run: echo "Vulnerabilities detected; ${{ steps.scan.outputs.vulns }}" && exit 1
