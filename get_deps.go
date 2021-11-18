@@ -84,7 +84,6 @@ func getVanagonGems(project, platform string, result chan depsOut, sem chan int,
 	var lindex int
 	var output []byte
 	for try := 0; try < 3; try++ {
-		//cout, err := exec.Command("vanagon", "dependencies", project, platform).Output()
 		vcmd := exec.Command("vanagon", "dependencies", project, platform)
 		var cout bytes.Buffer
 		var stderr bytes.Buffer
