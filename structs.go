@@ -27,6 +27,7 @@ type config struct {
 	UrlsToReplace   map[string]string
 	ProxyHost       string
 	NoMonitor       bool
+	Debug           bool
 }
 
 type VulnReport struct {
