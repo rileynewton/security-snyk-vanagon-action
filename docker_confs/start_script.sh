@@ -1,14 +1,14 @@
 #!/bin/bash
 # setup github SSH keys
-mkdir -p /root/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 # handle user SSH keys
 if [ "$INPUT_SSHKEY" ];
 then
     if [ "$INPUT_SSHKEYNAME" ];
     then
-        filename="/root/.ssh/$INPUT_SSHKEYNAME"
-        echo $INPUT_SSHKEY | base64 -d > "$filename"
-        chmod 600 "$filename"
+        filename="/.ssh/$INPUT_SSHKEYNAME"
+        echo $INPUT_SSHKEY | base64 -d > ~/"$filename"
+        chmod 600 ~/"$filename"
     else
         echo "ERROR: SSHKEY set with no SSHKEYNAME"
         exit 1
