@@ -28,6 +28,7 @@ type config struct {
 	ProxyHost       string
 	NoMonitor       bool
 	Debug           bool
+	Branch          string
 }
 
 type VulnReport struct {

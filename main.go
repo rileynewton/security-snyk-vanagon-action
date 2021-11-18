@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -85,6 +86,19 @@ func getEnvVar() (*config, error) {
 	// add a debug flag
 	debug := os.Getenv("INPUT_SVDEBUG")
 	conf.Debug = debug != ""
+	// get the branch
+	branch := os.Getenv("INPUT_BRANCH")
+	if branch != "" {
+		if len(branch) > 10 {
+			branch = branch[0:10]
+		}
+		reg, err := regexp.Compile("[^a-zA-Z0-9-]+")
+		if err != nil {
+			log.Fatal(err)
+		}
+		branch = reg.ReplaceAllString(branch, "")
+		conf.Branch = branch
+	}
 	// return
 	return &conf, nil
 }
@@ -181,7 +195,7 @@ func processProjPlat(deps depsOut, org string, results chan processOut) {
 	results <- processOut{hasGems: false}
 }
 
-func runSnyk(p processOut, org string, sem chan int, results chan []VulnReport, noMonitor bool) {
+func runSnyk(p processOut, org, branch string, sem chan int, results chan []VulnReport, noMonitor bool) {
 	log.Printf("running snyk on %s %s", p.project, p.platform)
 	if !p.hasGems {
 		<-sem
@@ -189,7 +203,7 @@ func runSnyk(p processOut, org string, sem chan int, results chan []VulnReport, 
 		return
 	}
 	// TODO: change true -> false by default
-	vulns, err := snykTest(p.path, p.project, p.platform, org, noMonitor)
+	vulns, err := snykTest(p.path, p.project, p.platform, org, branch, noMonitor)
 	//<-sem
 	if err != nil {
 		log.Printf("error running snyk on: %s %s", p.project, p.platform)
@@ -202,7 +216,7 @@ func runSnyk(p processOut, org string, sem chan int, results chan []VulnReport, 
 	log.Printf("Finished running snyk on %s %s", p.project, p.platform)
 }
 
-func snykTest(path, project, platform, org string, noMonitor bool) ([]VulnReport, error) {
+func snykTest(path, project, platform, org, branch string, noMonitor bool) ([]VulnReport, error) {
 	gPath := filepath.Join(path, "Gemfile.lock")
 	cwd, _ := os.Getwd()
 	fileArg := fmt.Sprintf("--file=%s/%s", cwd, gPath)
@@ -210,7 +224,12 @@ func snykTest(path, project, platform, org string, noMonitor bool) ([]VulnReport
 	// run snyk monitor
 	if !noMonitor {
 		snykOrg := fmt.Sprintf("--org=%s", org)
-		snykProj := fmt.Sprintf("--project-name=%s_%s", project, platform)
+		var snykProj string
+		if branch == "" {
+			snykProj = fmt.Sprintf("--project-name=%s_%s", project, platform)
+		} else {
+			snykProj = fmt.Sprintf("--project-name=%s_%s_%s", branch, project, platform)
+		}
 		err := exec.Command("snyk", "monitor", snykOrg, snykProj, fileArg).Run()
 		if err != nil {
 			log.Println("error running snyk monitor!", err)
@@ -374,7 +393,7 @@ func main() {
 	for _, po := range p {
 		toProcess = toProcess + 1
 		sem <- 1
-		go runSnyk(po, conf.SnykOrg, sem, sresults, conf.NoMonitor)
+		go runSnyk(po, conf.SnykOrg, conf.Branch, sem, sresults, conf.NoMonitor)
 	}
 	for i := 0; i < toProcess; i++ {
 		result := <-sresults

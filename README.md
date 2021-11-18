@@ -13,6 +13,9 @@ This input is the secret snyk token
 ### snykOrg (required)
 The organization in snyk to send results to
 
+### branch
+Branch name to prepend to the snyk project name. If branch is set to `""` then the name in snyk would be in the form `<project>_<platform>`. If branch is not empty it will be in the form `<branch>_<project>_<platform>`. Branch can be automatically set using `{{ github.ref_name }}`. Branch is limited to < 10 alphanumeric characters plus dash.
+
 ### noMonitor (not required)
 If you just want to run `snyk test` and not `snyk monitor` you should set this input to `true`
 

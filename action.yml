@@ -7,6 +7,9 @@ inputs:
   snykOrg:
     description: 'snyk org to write results to'
     required: true
+  branch:
+    description: 'branch name to prepend to the snyk project name'
+    required: false
   noMonitor:
     description: 'allows skipping the snyk monitor step'
     required: false
