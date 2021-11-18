@@ -34,6 +34,9 @@ inputs:
   sshKeyName:
     description: 'Name of the SSH key. Written to /root/.ssh/<sshKeyName>'
     required: false
+  svDebug:
+    description: 'turn on debug logging'
+    required: false
 outputs:
   vulns: # id of output
     description: 'Array of vulnerable packages'
