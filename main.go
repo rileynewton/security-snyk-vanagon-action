@@ -82,6 +82,9 @@ func getEnvVar() (*config, error) {
 	} else {
 		conf.ProxyHost = ""
 	}
+	// add a debug flag
+	debug := os.Getenv("INPUT_SVDEBUG")
+	conf.Debug = debug != ""
 	// return
 	return &conf, nil
 }
@@ -216,8 +219,6 @@ func snykTest(path, project, platform, org string, noMonitor bool) ([]VulnReport
 	}
 	// run snyk test (note, this will throw a non-zero exit code on vulns being found)
 	stest := exec.Command("snyk", "test", "--severity-threshold=medium", "--json", fileArg)
-	t, _ := os.Getwd()
-	_ = t
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	stest.Stdout = &out
@@ -310,6 +311,7 @@ func setDebugEnvVars() {
 	os.Setenv("INPUT_SNYKTOKEN", os.Getenv("SNYK_TOKEN"))
 	os.Setenv("INPUT_RPROXYKEY", os.Getenv("RPROXY_KEY"))
 	//os.Setenv("INPUT_RPROXYKEY", "test")
+	os.Setenv("INPUT_SVDEBUG", "true")
 	os.Setenv("INPUT_SNYKORG", "sectest")
 	os.Setenv("INPUT_SKIPPROJECTS", "agent-runtime-5.5.x,agent-runtime-1.10.x,client-tools-runtime-irving,pdk-runtime")
 	os.Setenv("INPUT_SKIPPLATFORMS", "cisco-wrlinux-5-x86_64,cisco-wrlinux-7-x86_64,debian-10-armhf,eos-4-i386,fedora-30-x86_64,fedora-31-x86_64,osx-10.14-x86_64")
@@ -321,6 +323,9 @@ func main() {
 	conf, err := getEnvVar()
 	if err != nil {
 		log.Fatal("couldn't setup the env vars", err)
+	}
+	if conf.Debug {
+		log.Println("===DEBUG IS ON===")
 	}
 	// change to the working directory
 	os.Chdir(conf.GithubWorkspace)
@@ -341,7 +346,7 @@ func main() {
 	}
 	// get all the vanagon dependencies
 	log.Println("running vanagon deps")
-	vDeps := runVanagonDeps(projects, platforms)
+	vDeps := runVanagonDeps(projects, platforms, conf.Debug)
 	// build gemfiles and run snyk on it
 	log.Println("building gemfiles")
 	// results := make(chan processOut, len(vDeps))

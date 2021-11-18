@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"os"
 	"os/exec"
@@ -51,7 +52,7 @@ func inSkip(skip *[]string, pname string) bool {
 	return false
 }
 
-func runVanagonDeps(projects, platforms []string) []depsOut {
+func runVanagonDeps(projects, platforms []string, debug bool) []depsOut {
 	ppGems := []depsOut{}
 	results := make(chan depsOut)
 	sem := make(chan int, MAX_V_DEPS)
@@ -62,7 +63,7 @@ func runVanagonDeps(projects, platforms []string) []depsOut {
 			sem <- 1
 			toProcess += 1
 			log.Printf("getting vdeps for %s %s. %d/%d", project, platform, toProcess, total)
-			go getVanagonGems(project, platform, results, sem)
+			go getVanagonGems(project, platform, results, sem, debug)
 		}
 	}
 	for i := 0; i < toProcess; i++ {
@@ -73,7 +74,7 @@ func runVanagonDeps(projects, platforms []string) []depsOut {
 	return ppGems
 }
 
-func getVanagonGems(project, platform string, result chan depsOut, sem chan int) {
+func getVanagonGems(project, platform string, result chan depsOut, sem chan int, debug bool) {
 	do := depsOut{
 		Platform: platform,
 		Project:  project,
@@ -83,19 +84,27 @@ func getVanagonGems(project, platform string, result chan depsOut, sem chan int)
 	var lindex int
 	var output []byte
 	for try := 0; try < 3; try++ {
-		cout, err := exec.Command("vanagon", "dependencies", project, platform).Output()
+		vcmd := exec.Command("vanagon", "dependencies", project, platform)
+		var cout bytes.Buffer
+		var stderr bytes.Buffer
+		vcmd.Stdout = &cout
+		vcmd.Stderr = &stderr
+		err := vcmd.Run()
 		log.Printf("finished vanagon deps run for %s %s", project, platform)
 		if err != nil {
 			log.Printf("Error running vanagon dependencies on: %s %s. Try #%d. Err: %s", project, platform, try, err)
+			if debug {
+				log.Printf("===DEBUG===\n%s\n===DEBUG===\n", stderr.String())
+			}
 			log.Println(string(output))
 		}
 		// strip out the any other data in stdout
-		findex = strings.Index(string(cout), "{")
-		lindex = strings.LastIndex(string(cout), "}")
+		findex = strings.Index(cout.String(), "{")
+		lindex = strings.LastIndex(cout.String(), "}")
 		if findex == -1 || lindex == -1 {
-			log.Printf("Got bad output from vanagon dependencies on %s %s. Try #%d Output: %s", project, platform, try, string(cout))
+			log.Printf("Got bad output from vanagon dependencies on %s %s. Try #%d Output: %s", project, platform, try, cout.String())
 		} else {
-			output = cout
+			output = cout.Bytes()
 			break
 		}
 	}
