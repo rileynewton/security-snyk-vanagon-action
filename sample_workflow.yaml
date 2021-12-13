@@ -16,7 +16,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Run Vanagon Snyk Scan
-      uses: puppetlabs/security-snyk-vanagon-action@v2.1.1
+      uses: puppetlabs/security-snyk-vanagon-action@v2.2.0
       with:
         snykToken: ${{ secrets.SNYK_TOKEN }}
         snykOrg: 'sectest'
